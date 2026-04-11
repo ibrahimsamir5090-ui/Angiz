@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MindForm — Habit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET & ROOT ─── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F4EF;
+  --surface:#FFFFFF;
+  --surface2:#F0EDE8;
+  --ink:#1A1714;
+  --ink2:#6B6560;
+  --ink3:#ADA8A3;
+  --accent:#2D6A4F;
+  --accent2:#40916C;
+  --accent-light:#D8F3DC;
+  --amber:#E9C46A;
+  --amber-dark:#F4A261;
+  --red:#E76F51;
+  --border:#E5E0D8;
+  --shadow:0 1px 3px rgba(26,23,20,0.06),0 4px 16px rgba(26,23,20,0.04);
+  --shadow-md:0 4px 24px rgba(26,23,20,0.10);
+  --r:10px;
+  --font-display:'DM Serif Display',serif;
+  --font:'DM Sans',sans-serif;
+}
+html,body{background:var(--bg);font-family:var(--font);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.5}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* ─── LAYOUT ─── */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+
+/* ─── SIDEBAR ─── */
+.sidebar{background:var(--ink);color:#fff;display:flex;flex-direction:column;padding:28px 20px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.logo{font-family:var(--font-display);font-size:1.6rem;color:#fff;margin-bottom:4px;letter-spacing:-0.5px}
+.logo span{color:var(--amber)}
+.tagline{font-size:0.68rem;color:rgba(255,255,255,0.35);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:32px}
+
+.nav-label{font-size:0.6rem;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin:20px 0 8px;font-weight:500}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background 0.15s;font-size:0.8rem;color:rgba(255,255,255,0.65);background:transparent;border:none;width:100%;text-align:left;font-family:var(--font)}
+.nav-btn:hover{background:rgba(255,255,255,0.07);color:#fff}
+.nav-btn.active{background:rgba(233,196,106,0.15);color:var(--amber)}
+.nav-btn .icon{width:16px;text-align:center;font-size:0.9rem;flex-shrink:0}
+
+.sidebar-month{margin-top:auto;padding-top:20px;border-top:1px solid rgba(255,255,255,0.08)}
+.month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.month-nav-btn{background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:26px;height:26px;border-radius:6px;cursor:pointer;font-size:0.85rem;transition:all 0.15s;font-family:var(--font)}
+.month-nav-btn:hover{background:rgba(255,255,255,0.15);color:#fff}
+.current-month{font-family:var(--font-display);font-size:1rem;color:#fff;letter-spacing:-0.3px}
+.current-year{font-size:0.7rem;color:rgba(255,255,255,0.35);margin-bottom:16px}
+
+/* Mini calendar */
+.mini-cal{width:100%}
+.mini-cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px}
+.mini-cal-head span{font-size:0.55rem;color:rgba(255,255,255,0.25);text-align:center;font-weight:500;letter-spacing:0.05em}
+.mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.mini-day{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:0.6rem;color:rgba(255,255,255,0.3);border-radius:4px;cursor:pointer;transition:all 0.15s;position:relative}
+.mini-day:hover{background:rgba(255,255,255,0.08);color:#fff}
+.mini-day.has-data::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:var(--amber)}
+.mini-day.today{background:rgba(233,196,106,0.2);color:var(--amber);font-weight:600}
+.mini-day.selected{background:var(--amber);color:var(--ink);font-weight:700}
+.mini-day.empty{cursor:default;pointer-events:none}
+
+/* ─── MAIN ─── */
+.main{padding:32px 36px;overflow-x:hidden}
+
+/* ─── TOPBAR ─── */
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-family:var(--font-display);font-size:1.8rem;color:var(--ink);letter-spacing:-0.5px}
+.page-title span{color:var(--accent)}
+.topbar-actions{display:flex;gap:10px;align-items:center}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:var(--font);font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.15s;border:none}
+.btn-primary{background:var(--ink);color:#fff}
+.btn-primary:hover{background:#2c2825}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--ink2)}
+.btn-outline:hover{border-color:var(--ink3);color:var(--ink)}
+.btn-green{background:var(--accent);color:#fff}
+.btn-green:hover{background:var(--accent2)}
+.btn-danger{background:transparent;border:none;color:var(--ink3);cursor:pointer;font-size:0.75rem;padding:4px 8px;border-radius:6px;transition:all 0.15s;font-family:var(--font)}
+.btn-danger:hover{background:#fee2e2;color:var(--red)}
+
+/* ─── STATS ROW ─── */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r) var(--r) 0 0}
+.stat-card.c-green::before{background:var(--accent)}
+.stat-card.c-amber::before{background:var(--amber)}
+.stat-card.c-red::before{background:var(--red)}
+.stat-card.c-blue::before{background:#74C0FC}
+.stat-card.c-ink::before{background:var(--ink)}
+.stat-num{font-family:var(--font-display);font-size:2rem;color:var(--ink);line-height:1;letter-spacing:-1px;margin-bottom:2px}
+.stat-label{font-size:0.65rem;color:var(--ink3);text-transform:uppercase;letter-spacing:0.12em;font-weight:500}
+.stat-sub{font-size:0.7rem;color:var(--ink2);margin-top:4px}
+
+/* ─── SECTION ─── */
+.section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 22px;box-shadow:var(--shadow);margin-bottom:16px}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title{font-size:0.65rem;font-weight:600;letter-spacing:0.16em;text-transform:uppercase;color:var(--ink3)}
+.section-title-lg{font-family:var(--font-display);font-size:1.1rem;color:var(--ink);letter-spacing:-0.3px}
+
+/* ─── HABIT TABLE ─── */
+.habit-table-wrap{overflow-x:auto}
+.habit-table{width:100%;border-collapse:collapse;min-width:900px}
+.habit-table th{font-size:0.58rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);padding:0 0 10px;text-align:center;position:sticky;top:0;background:var(--surface)}
+.habit-table th.habit-name-th{text-align:left;padding-left:4px;min-width:160px}
+.habit-table th.today-col{color:var(--accent);background:var(--accent-light);border-radius:6px 6px 0 0}
+
+/* Day number header */
+.day-num-header{font-size:0.65rem;font-weight:600;color:var(--ink2);line-height:1}
+.day-name-header{font-size:0.5rem;color:var(--ink3);font-weight:400}
+
+/* Habit row */
+.habit-tr{border-top:1px solid var(--border)}
+.habit-tr:hover{background:var(--surface2)}
+.habit-name-cell{padding:7px 4px;display:flex;align-items:center;gap:8px;min-width:160px}
+.habit-emoji{font-size:1rem;flex-shrink:0}
+.habit-name-input{background:transparent;border:none;outline:none;font-family:var(--font);font-size:0.8rem;color:var(--ink);width:100%;cursor:text;padding:2px 4px;border-radius:4px;transition:background 0.15s}
+.habit-name-input:focus{background:var(--surface2)}
+
+/* Checkbox cell */
+.cb-cell{text-align:center;padding:5px 3px;position:relative}
+.cb-cell.today-col{background:rgba(45,106,79,0.04)}
+.habit-cb{width:18px;height:18px;border-radius:4px;border:1.5px solid var(--border);appearance:none;-webkit-appearance:none;cursor:pointer;background:transparent;transition:all 0.15s;position:relative;display:block;margin:0 auto}
+.habit-cb:checked{background:var(--accent);border-color:var(--accent)}
+.habit-cb:checked::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;line-height:1}
+.habit-cb:hover:not(:checked){border-color:var(--accent);background:var(--accent-light)}
+.habit-cb:disabled{opacity:0.25;cursor:not-allowed}
+
+/* Row stats */
+.row-pct{font-size:0.7rem;font-weight:600;padding:0 6px;text-align:center;min-width:44px}
+.row-bar-cell{padding:0 8px;min-width:80px}
+.row-bar{height:4px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.row-bar-fill{height:100%;border-radius:99px;background:var(--accent);transition:width 0.4s ease}
+
+/* Month total row */
+.total-tr td{padding:8px 4px;border-top:2px solid var(--border);font-size:0.68rem;font-weight:600;color:var(--ink2);text-align:center}
+.total-tr .day-total{font-size:0.75rem;font-weight:700;color:var(--ink)}
+.total-tr .day-total.full{color:var(--accent)}
+
+/* ─── EMPTY STATE ─── */
+.empty-habits{text-align:center;padding:48px 20px;color:var(--ink3)}
+.empty-habits .big-icon{font-size:2.5rem;margin-bottom:12px}
+.empty-habits p{font-size:0.85rem;margin-bottom:16px}
+
+/* ─── BOTTOM GRID ─── */
+.bottom-grid{display:grid;grid-template-columns:1fr 1fr 300px;gap:16px;margin-bottom:16px}
+
+/* ─── DONUT ─── */
+.donut-wrap{display:flex;align-items:center;gap:20px}
+.donut-svg{transform:rotate(-90deg)}
+.donut-track{fill:none;stroke:var(--surface2);stroke-width:10}
+.donut-fill{fill:none;stroke-linecap:round;stroke-width:10;transition:stroke-dashoffset 0.8s cubic-bezier(0.4,0,0.2,1)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-pct{font-family:var(--font-display);font-size:1.4rem;color:var(--ink);letter-spacing:-1px;line-height:1}
+.donut-done{font-size:0.58rem;color:var(--ink3);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px}
+.donut-legend{display:flex;flex-direction:column;gap:10px}
+.legend-item{display:flex;align-items:center;gap:8px}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.legend-label{font-size:0.7rem;color:var(--ink2)}
+.legend-val{font-size:0.75rem;font-weight:600;color:var(--ink);margin-left:auto}
+
+/* ─── BAR CHART ─── */
+.bar-chart{display:flex;align-items:flex-end;gap:4px;height:100px}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end}
+.bar-col-bar{width:100%;border-radius:3px 3px 0 0;transition:height 0.5s ease;min-height:3px;position:relative;cursor:pointer}
+.bar-col-bar:hover{filter:brightness(0.9)}
+.bar-col-label{font-size:0.5rem;color:var(--ink3);white-space:nowrap;font-weight:500}
+
+/* ─── WEEK CHART ─── */
+.week-bars{display:flex;gap:6px;align-items:flex-end;height:80px}
+.week-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.week-bar{width:100%;border-radius:4px 4px 0 0;transition:height 0.5s ease;min-height:3px}
+.week-bar-label{font-size:0.55rem;color:var(--ink3);font-weight:500}
+.week-bar-val{font-size:0.6rem;color:var(--ink2);font-weight:600}
+
+/* ─── TOP HABITS ─── */
+.top-habit-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.top-habit-item:last-child{border-bottom:none}
+.top-rank{font-size:0.65rem;font-weight:700;color:var(--ink3);width:18px;flex-shrink:0;text-align:right}
+.top-rank.gold{color:#D4A017}
+.top-rank.silver{color:#8A8A8A}
+.top-rank.bronze{color:#A0522D}
+.top-habit-name{flex:1;font-size:0.75rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.top-habit-pct{font-size:0.72rem;font-weight:600;color:var(--accent);min-width:36px;text-align:right}
+.top-prog-bar{width:60px;height:4px;background:var(--surface2);border-radius:99px;overflow:hidden;flex-shrink:0}
+.top-prog-fill{height:100%;border-radius:99px;background:var(--accent);transition:width 0.5s ease}
+
+/* ─── MODAL ─── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,0.5);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:14px;padding:28px;width:400px;max-width:95vw;box-shadow:var(--shadow-md)}
+.modal-title{font-family:var(--font-display);font-size:1.3rem;color:var(--ink);margin-bottom:20px;letter-spacing:-0.3px}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:0.65rem;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px}
+.form-input{width:100%;background:var(--bg);border:1.5px solid var(--border);border-radius:8px;padding:10px 14px;font-family:var(--font);font-size:0.85rem;color:var(--ink);outline:none;transition:border-color 0.15s}
+.form-input:focus{border-color:var(--accent)}
+.emoji-grid{display:grid;grid-template-columns:repeat(9,1fr);gap:5px;margin-top:6px;max-height:120px;overflow-y:auto}
+.emoji-opt{font-size:1.1rem;background:var(--bg);border:1.5px solid var(--border);border-radius:7px;padding:5px;cursor:pointer;text-align:center;transition:all 0.12s}
+.emoji-opt:hover,.emoji-opt.sel{border-color:var(--accent);background:var(--accent-light)}
+.modal-actions{display:flex;gap:8px;margin-top:20px}
+
+/* ─── VIEWS ─── */
+.view{display:none}
+.view.active{display:block}
+
+/* ─── REPORT ─── */
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.streak-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent-light);color:var(--accent);border-radius:99px;padding:4px 12px;font-size:0.72rem;font-weight:600}
+.heat-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px}
+.heat-cell{aspect-ratio:1;border-radius:3px;transition:all 0.15s;cursor:default;position:relative}
+.heat-cell:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:0.55rem;padding:3px 7px;border-radius:4px;white-space:nowrap;z-index:10;font-family:var(--font)}
+.heat-0{background:var(--surface2)}
+.heat-1{background:#B7E4C7}
+.heat-2{background:#74C69D}
+.heat-3{background:#40916C}
+.heat-4{background:#1B4332}
+
+/* ─── NOTIFICATION ─── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:10px 18px;border-radius:8px;font-size:0.78rem;z-index:2000;transform:translateY(80px);opacity:0;transition:all 0.3s ease;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ─── ANIMATIONS ─── */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn 0.4s ease forwards}
+
+/* ─── HABIT COLOR DOT ─── */
+.color-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:6px}
+.color-opt{width:100%;aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.12s}
+.color-opt:hover,.color-opt.sel{border-color:var(--ink);transform:scale(1.1)}
+
+/* ─── PROGRESS RING (sidebar) ─── */
+.sidebar-progress{margin-top:16px}
+.sidebar-progress-label{font-size:0.6rem;color:rgba(255,255,255,0.35);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:6px}
+.sidebar-prog-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:99px;overflow:hidden}
+.sidebar-prog-fill{height:100%;background:var(--amber);border-radius:99px;transition:width 0.5s ease}
+.sidebar-prog-txt{font-size:0.65rem;color:rgba(255,255,255,0.5);margin-top:4px}
+
+/* ─── TOOLTIP ─── */
+[title]{position:relative}
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ADD HABIT MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Add New Habit</div>
+    <div class="form-group">
+      <label class="form-label">Habit Name</label>
+      <input class="form-input" id="habit-name-inp" placeholder="e.g. Morning meditation" maxlength="32"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Choose Icon</label>
+      <div class="emoji-grid" id="emoji-grid"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="saveHabit()" style="flex:1">Add Habit</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">MindForm<span>.</span></div>
+    <div class="tagline">Habit Tracker</div>
+
+    <div class="nav-label">Menu</div>
+    <button class="nav-btn active" onclick="switchView('tracker',this)">
+      <span class="icon">✦</span> Tracker
+    </button>
+    <button class="nav-btn" onclick="switchView('report',this)">
+      <span class="icon">◎</span> Report
+    </button>
+    <button class="nav-btn" onclick="switchView('weekly',this)">
+      <span class="icon">▤</span> Weekly
+    </button>
+
+    <div class="nav-label">Actions</div>
+    <button class="nav-btn" onclick="openModal()">
+      <span class="icon">＋</span> New Habit
+    </button>
+    <button class="nav-btn" onclick="exportData()">
+      <span class="icon">↓</span> Export JSON
+    </button>
+
+    <!-- Month navigation -->
+    <div class="sidebar-month">
+      <div class="month-nav">
+        <button class="month-nav-btn" onclick="changeMonth(-1)">‹</button>
+        <div>
+          <div class="current-month" id="sidebar-month-name"></div>
+          <div class="current-year" id="sidebar-year"></div>
+        </div>
+        <button class="month-nav-btn" onclick="changeMonth(1)">›</button>
+      </div>
+      <!-- Mini calendar -->
+      <div class="mini-cal">
+        <div class="mini-cal-head" id="mini-cal-head"></div>
+        <div class="mini-cal-grid" id="mini-cal-grid"></div>
+      </div>
+      <!-- Today's progress -->
+      <div class="sidebar-progress">
+        <div class="sidebar-progress-label">Today's Progress</div>
+        <div class="sidebar-prog-bar">
+          <div class="sidebar-prog-fill" id="sidebar-prog-fill" style="width:0%"></div>
+        </div>
+        <div class="sidebar-prog-txt" id="sidebar-prog-txt">0 / 0 habits</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- ══ TRACKER VIEW ══ -->
+    <div class="view active" id="view-tracker">
+      <div class="topbar fade-in">
+        <div>
+          <div class="page-title" id="tracker-month-title">January <span>2025</span></div>
+          <div style="font-size:0.7rem;color:var(--ink3);margin-top:2px" id="tracker-subtitle"></div>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="resetMonth()" title="Clear all checks for this month">Reset Month</button>
+          <button class="btn btn-green" onclick="openModal()">+ Add Habit</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row fade-in" id="stats-row">
+        <div class="stat-card c-ink">
+          <div class="stat-num" id="s-total-habits">0</div>
+          <div class="stat-label">Habits</div>
+          <div class="stat-sub" id="s-days-in-month"></div>
+        </div>
+        <div class="stat-card c-green">
+          <div class="stat-num" id="s-completed">0</div>
+          <div class="stat-label">Completed</div>
+          <div class="stat-sub" id="s-completed-sub"></div>
+        </div>
+        <div class="stat-card c-red">
+          <div class="stat-num" id="s-missed">0</div>
+          <div class="stat-label">Missed</div>
+          <div class="stat-sub">past days only</div>
+        </div>
+        <div class="stat-card c-amber">
+          <div class="stat-num" id="s-streak">0</div>
+          <div class="stat-label">Best Streak</div>
+          <div class="stat-sub" id="s-streak-sub"></div>
+        </div>
+        <div class="stat-card c-blue">
+          <div class="stat-num" id="s-pct">0%</div>
+          <div class="stat-label">Completion</div>
+          <div class="stat-sub">this month</div>
+        </div>
+      </div>
+
+      <!-- Habit Table -->
+      <div class="section fade-in">
+        <div class="section-head">
+          <div class="section-title-lg" id="table-title">Monthly Tracker</div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-size:0.65rem;color:var(--ink3)">Tip: click habit name to rename</span>
+          </div>
+        </div>
+        <div class="habit-table-wrap">
+          <table class="habit-table" id="habit-table">
+            <thead id="table-head"></thead>
+            <tbody id="table-body"></tbody>
+          </table>
+          <div class="empty-habits" id="empty-state" style="display:none">
+            <div class="big-icon">🌱</div>
+            <p>No habits yet. Add your first habit to get started.</p>
+            <button class="btn btn-green" onclick="openModal()">+ Add First Habit</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom charts grid -->
+      <div class="bottom-grid fade-in">
+
+        <!-- Donut + legend -->
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Monthly Overview</div>
+          </div>
+          <div class="donut-wrap">
+            <div style="position:relative;width:110px;height:110px;flex-shrink:0">
+              <svg width="110" height="110" class="donut-svg" viewBox="0 0 110 110">
+                <circle class="donut-track" cx="55" cy="55" r="44"/>
+                <circle class="donut-fill" id="donut-fill-green" cx="55" cy="55" r="44"
+                  stroke="#2D6A4F" stroke-dasharray="276.46" stroke-dashoffset="276.46"/>
+                <defs>
+                  <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#2D6A4F"/>
+                    <stop offset="100%" stop-color="#74C69D"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="donut-center">
+                <div class="donut-pct" id="donut-pct-txt">0%</div>
+                <div class="donut-done">done</div>
+              </div>
+            </div>
+            <div class="donut-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background:var(--accent)"></div>
+                <div class="legend-label">Completed</div>
+                <div class="legend-val" id="leg-done">0</div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:#FCA5A5"></div>
+                <div class="legend-label">Missed</div>
+                <div class="legend-val" id="leg-missed">0</div>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:var(--surface2);border:1px solid var(--border)"></div>
+                <div class="legend-label">Remaining</div>
+                <div class="legend-val" id="leg-remaining">0</div>
+              </div>
+              <div style="height:1px;background:var(--border);margin:4px 0"></div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:var(--ink)"></div>
+                <div class="legend-label">Total Goal</div>
+                <div class="legend-val" id="leg-goal">0</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly bar chart -->
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Weekly Breakdown</div>
+          </div>
+          <div class="week-bars" id="week-bars"></div>
+          <div style="display:flex;justify-content:space-around;margin-top:6px" id="week-labels"></div>
+        </div>
+
+        <!-- Top habits -->
+        <div class="section">
+          <div class="section-head">
+            <div class="section-title">Top Habits</div>
+          </div>
+          <div id="top-habits-list"></div>
+          <div id="top-habits-empty" style="font-size:0.7rem;color:var(--ink3);text-align:center;padding:16px 0;display:none">No habits yet</div>
+        </div>
+      </div>
+
+      <!-- Daily bar chart -->
+      <div class="section fade-in">
+        <div class="section-head">
+          <div class="section-title">Daily Check-ins (this month)</div>
+        </div>
+        <div class="bar-chart" id="daily-bar-chart"></div>
+        <div style="display:flex;gap:4px;margin-top:6px" id="daily-bar-labels"></div>
+      </div>
+    </div>
+
+    <!-- ══ REPORT VIEW ══ -->
+    <div class="view" id="view-report">
+      <div class="topbar fade-in">
+        <div class="page-title">Monthly <span>Report</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" onclick="printReport()">Print / Save PDF</button>
+        </div>
+      </div>
+      <div class="report-grid fade-in" id="report-content"></div>
+    </div>
+
+    <!-- ══ WEEKLY VIEW ══ -->
+    <div class="view" id="view-weekly">
+      <div class="topbar fade-in">
+        <div class="page-title">Weekly <span>View</span></div>
+        <div class="topbar-actions">
+          <button class="btn btn-outline" id="prev-week-btn" onclick="changeWeekOffset(-1)">‹ Prev</button>
+          <span id="week-range-label" style="font-size:0.8rem;color:var(--ink2);min-width:160px;text-align:center"></span>
+          <button class="btn btn-outline" id="next-week-btn" onclick="changeWeekOffset(1)">Next ›</button>
+        </div>
+      </div>
+      <div class="section fade-in">
+        <div class="habit-table-wrap">
+          <table class="habit-table" id="weekly-table">
+            <thead id="weekly-head"></thead>
+            <tbody id="weekly-body"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section fade-in" style="margin-top:0">
+        <div class="section-head"><div class="section-title">This Week vs Last Week</div></div>
+        <div class="week-bars" id="compare-bars" style="height:80px"></div>
+        <div style="display:flex;gap:12px;margin-top:10px" id="compare-labels"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA & STATE
+// ══════════════════════════════════════════
+const KEY = 'mindform_desktop_v1';
+const EMOJIS = ['🌅','🧘','🏋️','🚿','💼','📖','🧠','🚫','🍷','📵','📝','🛌','💧','🥗','🏃','🧹','✍️','🎯','💊','🌿','🎸','🏊','🚴','💤','🤝','🧗','📷','🎮','🌙','☕','🦷','🏥','📱','🎨'];
+const COLORS = ['#2D6A4F','#E76F51','#E9C46A','#264653','#A8DADC','#457B9D','#6D6875','#C77DFF','#F4A261','#2A9D8F','#E63946','#606C38'];
+const DAYS_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+let state = {
+  habits: [],   // {id, name, emoji, color, createdAt}
+  checks: {},   // "habitId_YYYY-MM-DD": true
+  viewDate: {year: new Date().getFullYear(), month: new Date().getMonth()}, // 0-indexed month
+  weekOffset: 0,
+};
+let selectedEmoji = EMOJIS[0];
+let selectedColor = COLORS[0];
+let editingId = null;
+let currentView = 'tracker';
+
+// ── STORAGE ──
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY) || '{}');
+    if (d.habits) state.habits = d.habits;
+    if (d.checks) state.checks = d.checks;
+    if (d.viewDate) state.viewDate = d.viewDate;
+  } catch(e) {}
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify({habits:state.habits,checks:state.checks,viewDate:state.viewDate})); } catch(e) {}
+}
+
+// ── HELPERS ──
+function toYMD(y,m,d) { return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`; }
+function todayYMD() { const n=new Date(); return toYMD(n.getFullYear(),n.getMonth(),n.getDate()); }
+function daysInMonth(y,m) { return new Date(y,m+1,0).getDate(); }
+function firstDayOfMonth(y,m) { let d=new Date(y,m,1).getDay(); return d===0?6:d-1; } // Mon=0
+function isToday(ymd) { return ymd===todayYMD(); }
+function isPast(ymd) { return ymd<todayYMD(); }
+function isFuture(ymd) { return ymd>todayYMD(); }
+function checkKey(hid,ymd) { return `${hid}_${ymd}`; }
+function isChecked(hid,ymd) { return !!state.checks[checkKey(hid,ymd)]; }
+
+function getDayOfWeek(y,m,d) {
+  const day = new Date(y,m,d).getDay();
+  return day===0?6:day-1; // Mon=0
+}
+
+// ── COMPUTED ──
+function getMonthStats(y, m) {
+  const days = daysInMonth(y, m);
+  const today = todayYMD();
+  const H = state.habits.length;
+  let completed = 0, missed = 0, remaining = 0;
+
+  for (let d = 1; d <= days; d++) {
+    const ymd = toYMD(y, m, d);
+    for (const h of state.habits) {
+      const done = isChecked(h.id, ymd);
+      if (done) completed++;
+      else if (isPast(ymd)) missed++;
+      else remaining++;
+    }
+  }
+
+  // Past days only for pct (exclude future)
+  const pastDays = Array.from({length:days},(_,i)=>toYMD(y,m,i+1)).filter(d=>!isFuture(d)).length;
+  const pastGoal = pastDays * H;
+  const pct = pastGoal > 0 ? Math.round((completed / pastGoal) * 100) : 0;
+  const totalGoal = days * H;
+
+  return { completed, missed, remaining, pct, totalGoal, pastGoal, days, H };
+}
+
+function getHabitMonthPct(hid, y, m) {
+  const days = daysInMonth(y, m);
+  let done = 0, possible = 0;
+  for (let d = 1; d <= days; d++) {
+    const ymd = toYMD(y, m, d);
+    if (!isFuture(ymd)) { possible++; if (isChecked(hid, ymd)) done++; }
+  }
+  return possible > 0 ? Math.round((done / possible) * 100) : 0;
+}
+
+function getBestStreak(hid) {
+  // across all time
+  let best = 0, cur = 0;
+  const allKeys = Object.keys(state.checks).filter(k=>k.startsWith(hid+'_')&&state.checks[k]);
+  if (!allKeys.length) return 0;
+  const dates = allKeys.map(k=>k.split('_')[1]).sort();
+  for (let i = 0; i < dates.length; i++) {
+    if (i === 0) { cur = 1; best = 1; continue; }
+    const prev = new Date(dates[i-1]), cur2 = new Date(dates[i]);
+    const diff = (cur2 - prev) / 86400000;
+    if (diff === 1) { cur++; best = Math.max(best, cur); }
+    else cur = 1;
+  }
+  return best;
+}
+
+function getTopHabits() {
+  const {year:y, month:m} = state.viewDate;
+  return state.habits.map(h => ({
+    ...h,
+    pct: getHabitMonthPct(h.id, y, m),
+    streak: getBestStreak(h.id),
+  })).sort((a,b) => b.pct - a.pct);
+}
+
+function getWeekDays(offset) {
+  const today = new Date();
+  const dow = today.getDay()===0?6:today.getDay()-1;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - dow + offset*7);
+  return Array.from({length:7},(_,i)=>{
+    const d = new Date(monday); d.setDate(monday.getDate()+i);
+    return { date:d, ymd:toYMD(d.getFullYear(),d.getMonth(),d.getDate()) };
+  });
+}
+
+// ══════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════
+
+function renderAll() {
+  renderSidebar();
+  if (currentView==='tracker') renderTracker();
+  else if (currentView==='report') renderReport();
+  else if (currentView==='weekly') renderWeekly();
+}
+
+// ── SIDEBAR ──
+function renderSidebar() {
+  const {year:y, month:m} = state.viewDate;
+  document.getElementById('sidebar-month-name').textContent = MONTHS[m];
+  document.getElementById('sidebar-year').textContent = y;
+
+  // Mini calendar
+  const head = document.getElementById('mini-cal-head');
+  head.innerHTML = ['M','T','W','T','F','S','S'].map(d=>`<span>${d}</span>`).join('');
+
+  const grid = document.getElementById('mini-cal-grid');
+  grid.innerHTML = '';
+  const days = daysInMonth(y, m);
+  const firstDay = firstDayOfMonth(y, m);
+  const todayStr = todayYMD();
+
+  // empty cells
+  for (let i=0;i<firstDay;i++) {
+    const el=document.createElement('div'); el.className='mini-day empty'; grid.appendChild(el);
+  }
+  for (let d=1;d<=days;d++) {
+    const ymd = toYMD(y,m,d);
+    const el = document.createElement('div');
+    const hasData = state.habits.some(h=>isChecked(h.id,ymd));
+    el.className = 'mini-day' + (hasData?' has-data':'') + (ymd===todayStr?' today':'');
+    el.textContent = d;
+    grid.appendChild(el);
+  }
+
+  // Today's progress
+  const todayChecks = state.habits.filter(h=>isChecked(h.id,todayYMD())).length;
+  const total = state.habits.length;
+  const pct = total>0 ? Math.round((todayChecks/total)*100) : 0;
+  document.getElementById('sidebar-prog-fill').style.width = pct+'%';
+  document.getElementById('sidebar-prog-txt').textContent = `${todayChecks} / ${total} habits`;
+}
+
+// ── TRACKER ──
+function renderTracker() {
+  const {year:y, month:m} = state.viewDate;
+  const days = daysInMonth(y, m);
+  const H = state.habits.length;
+
+  // Title
+  document.getElementById('tracker-month-title').innerHTML = `${MONTHS[m]} <span>${y}</span>`;
+  document.getElementById('tracker-subtitle').textContent = `${days} days · ${H} habits`;
+  document.getElementById('table-title').textContent = `${MONTHS[m]} ${y} — Monthly Tracker`;
+
+  // Stats
+  const s = getMonthStats(y, m);
+  document.getElementById('s-total-habits').textContent = H;
+  document.getElementById('s-days-in-month').textContent = `${days} days`;
+  document.getElementById('s-completed').textContent = s.completed;
+  document.getElementById('s-completed-sub').textContent = `of ${s.pastGoal} possible`;
+  document.getElementById('s-missed').textContent = s.missed;
+  document.getElementById('s-streak').textContent = H>0 ? Math.max(...state.habits.map(h=>getBestStreak(h.id)),0) : 0;
+  document.getElementById('s-streak-sub').textContent = 'days in a row';
+  document.getElementById('s-pct').textContent = s.pct + '%';
+
+  // Table header
+  const thead = document.getElementById('table-head');
+  let headHTML = '<tr><th class="habit-name-th">Habit</th>';
+  for (let d=1;d<=days;d++) {
+    const ymd = toYMD(y,m,d);
+    const dow = getDayOfWeek(y,m,d);
+    const isT = isToday(ymd);
+    headHTML += `<th class="${isT?'today-col':''}" title="${DAYS_SHORT[dow]} ${d}">
+      <div class="day-num-header">${d}</div>
+      <div class="day-name-header">${DAYS_SHORT[dow][0]}</div>
+    </th>`;
+  }
+  headHTML += '<th style="min-width:50px;text-align:center">%</th><th style="min-width:80px">Progress</th><th></th></tr>';
+  thead.innerHTML = headHTML;
+
+  // Table body
+  const tbody = document.getElementById('table-body');
+  if (!H) {
+    tbody.innerHTML = '';
+    document.getElementById('empty-state').style.display = 'block';
+    thead.style.display = 'none';
+  } else {
+    document.getElementById('empty-state').style.display = 'none';
+    thead.style.display = '';
+  }
+
+  tbody.innerHTML = '';
+  const todayStr = todayYMD();
+
+  state.habits.forEach(h => {
+    const tr = document.createElement('tr');
+    tr.className = 'habit-tr';
+
+    // Name cell
+    let rowHTML = `<td><div class="habit-name-cell">
+      <span class="habit-emoji">${h.emoji}</span>
+      <input class="habit-name-input" value="${h.name}" data-id="${h.id}"
+        onblur="renameHabit(this)" onkeydown="if(event.key==='Enter')this.blur()" maxlength="32"/>
+    </div></td>`;
+
+    // Day checkboxes
+    let done=0, possible=0;
+    for (let d=1;d<=days;d++) {
+      const ymd = toYMD(y,m,d);
+      const checked = isChecked(h.id,ymd);
+      const future = isFuture(ymd);
+      if (!future) possible++;
+      if (checked) done++;
+      const isT = isToday(ymd);
+      rowHTML += `<td class="cb-cell${isT?' today-col':''}">
+        <input type="checkbox" class="habit-cb" ${checked?'checked':''} ${future?'disabled':''}
+          data-hid="${h.id}" data-ymd="${ymd}"/>
+      </td>`;
+    }
+
+    const pct = possible>0 ? Math.round((done/possible)*100) : 0;
+    rowHTML += `<td class="row-pct" style="color:${pct>=80?'var(--accent)':pct>=50?'var(--amber-dark)':'var(--red)'}">${pct}%</td>`;
+    rowHTML += `<td class="row-bar-cell"><div class="row-bar"><div class="row-bar-fill" style="width:${pct}%;background:${h.color||'var(--accent)'}"></div></div></td>`;
+    rowHTML += `<td><button class="btn-danger" onclick="deleteHabit('${h.id}')">✕</button></td>`;
+
+    tr.innerHTML = rowHTML;
+    tbody.appendChild(tr);
+  });
+
+  // Daily totals row
+  if (H) {
+    const totalTr = document.createElement('tr');
+    totalTr.className = 'total-tr';
+    let totHTML = '<td style="text-align:left;font-size:0.68rem;color:var(--ink3);padding-left:4px">Daily Total</td>';
+    for (let d=1;d<=days;d++) {
+      const ymd = toYMD(y,m,d);
+      const cnt = state.habits.filter(h=>isChecked(h.id,ymd)).length;
+      const full = cnt===H;
+      totHTML += `<td class="${full&&!isFuture(ymd)?'day-total full':'day-total'}" title="${cnt}/${H}">${cnt>0?cnt:''}</td>`;
+    }
+    totHTML += '<td colspan="3"></td>';
+    totalTr.innerHTML = totHTML;
+    tbody.appendChild(totalTr);
+  }
+
+  // Attach checkbox events
+  tbody.querySelectorAll('.habit-cb').forEach(cb => {
+    cb.addEventListener('change', function() {
+      const key = checkKey(this.dataset.hid, this.dataset.ymd);
+      if (this.checked) state.checks[key] = true;
+      else delete state.checks[key];
+      save();
+      updateCharts();
+      renderSidebar();
+    });
+  });
+
+  updateCharts();
+}
+
+function updateCharts() {
+  const {year:y, month:m} = state.viewDate;
+  const s = getMonthStats(y, m);
+
+  // Stats
+  document.getElementById('s-completed').textContent = s.completed;
+  document.getElementById('s-completed-sub').textContent = `of ${s.pastGoal} possible`;
+  document.getElementById('s-missed').textContent = s.missed;
+  document.getElementById('s-pct').textContent = s.pct + '%';
+
+  // Donut — based on past days only (accurate)
+  const total = s.pastGoal;
+  const pct = s.pct / 100;
+  const circumference = 2 * Math.PI * 44; // r=44 → 276.46
+  const arc = document.getElementById('donut-fill-green');
+  if (arc) {
+    arc.style.strokeDashoffset = circumference * (1 - pct);
+    arc.style.stroke = pct >= 0.8 ? '#2D6A4F' : pct >= 0.5 ? '#E9C46A' : '#E76F51';
+  }
+  const el = document.getElementById('donut-pct-txt');
+  if (el) el.textContent = s.pct + '%';
+  const ld = document.getElementById('leg-done'); if(ld) ld.textContent = s.completed;
+  const lm = document.getElementById('leg-missed'); if(lm) lm.textContent = s.missed;
+  const lr = document.getElementById('leg-remaining'); if(lr) lr.textContent = s.remaining;
+  const lg = document.getElementById('leg-goal'); if(lg) lg.textContent = s.totalGoal;
+
+  // Daily bar chart
+  renderDailyBars(y, m);
+  // Weekly breakdown
+  renderWeekBreakdown(y, m);
+  // Top habits
+  renderTopHabits();
+}
+
+function renderDailyBars(y, m) {
+  const days = daysInMonth(y, m);
+  const H = state.habits.length;
+  const chart = document.getElementById('daily-bar-chart');
+  const labels = document.getElementById('daily-bar-labels');
+  if (!chart) return;
+  chart.innerHTML = ''; labels.innerHTML = '';
+  if (!H) return;
+
+  const vals = Array.from({length:days},(_,i)=>{
+    const ymd=toYMD(y,m,i+1);
+    return state.habits.filter(h=>isChecked(h.id,ymd)).length;
+  });
+  const max = Math.max(...vals, 1);
+
+  vals.forEach((v,i) => {
+    const ymd = toYMD(y,m,i+1);
+    const pct = v/max;
+    const h = Math.max(2, Math.round(pct*90));
+    const col = isToday(ymd)?'#2D6A4F':isFuture(ymd)?'#E5E0D8':v===H&&H>0?'#2D6A4F':v>0?'#74C69D':'#E5E0D8';
+    const wrap = document.createElement('div'); wrap.className='bar-col';
+    wrap.innerHTML = `<div class="bar-col-bar" style="height:${h}px;background:${col}" title="Day ${i+1}: ${v}/${H}"></div>`;
+    chart.appendChild(wrap);
+    const lbl=document.createElement('div'); lbl.style.cssText='flex:1;text-align:center';
+    if ((i+1)%5===0||(i+1)===1||(i+1)===days) lbl.innerHTML=`<span class="bar-col-label">${i+1}</span>`;
+    labels.appendChild(lbl);
+  });
+}
+
+function renderWeekBreakdown(y, m) {
+  const bars = document.getElementById('week-bars');
+  const lbls = document.getElementById('week-labels');
+  if (!bars) return;
+  bars.innerHTML = ''; lbls.innerHTML = '';
+  const H = state.habits.length;
+  if (!H) return;
+
+  const days = daysInMonth(y, m);
+  // Split into weeks (Mon-Sun)
+  const weeks = [];
+  let week = { label:'', done:0, possible:0 };
+  for (let d=1;d<=days;d++) {
+    const ymd = toYMD(y,m,d);
+    const dow = getDayOfWeek(y,m,d);
+    if (dow===0 && d>1) { weeks.push(week); week={label:'',done:0,possible:0}; }
+    if (!week.label) week.label = `W${weeks.length+1}`;
+    for (const h of state.habits) {
+      if (!isFuture(ymd)) { week.possible++; if (isChecked(h.id,ymd)) week.done++; }
+    }
+  }
+  weeks.push(week);
+
+  const max = Math.max(...weeks.map(w=>w.possible), 1);
+  weeks.forEach((w,i) => {
+    const pct = w.possible>0 ? w.done/w.possible : 0;
+    const h = Math.max(3, Math.round((w.possible/max)*70));
+    const fillH = Math.round(h*pct);
+    const wrap = document.createElement('div'); wrap.className='week-bar-wrap';
+    const clr = pct>=0.8?'#2D6A4F':pct>=0.5?'#E9C46A':'#E76F51';
+    wrap.innerHTML = `
+      <div class="week-bar-val">${w.possible>0?Math.round(pct*100)+'%':''}</div>
+      <div style="width:100%;height:${h}px;background:var(--surface2);border-radius:4px 4px 0 0;overflow:hidden;display:flex;align-items:flex-end">
+        <div style="width:100%;height:${fillH}px;background:${clr};border-radius:4px 4px 0 0;transition:height 0.5s ease"></div>
+      </div>
+      <div class="week-bar-label">${w.label}</div>`;
+    bars.appendChild(wrap);
+  });
+}
+
+function renderTopHabits() {
+  const list = document.getElementById('top-habits-list');
+  const empty = document.getElementById('top-habits-empty');
+  if (!list) return;
+  const top = getTopHabits();
+  if (!top.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  const RANK_COLORS = ['#D4A017','#8A8A8A','#A0522D'];
+  list.innerHTML = top.slice(0,8).map((h,i)=>`
+    <div class="top-habit-item">
+      <div class="top-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}</div>
+      <span style="font-size:0.85rem;flex-shrink:0">${h.emoji}</span>
+      <div class="top-habit-name">${h.name}</div>
+      <div class="top-prog-bar"><div class="top-prog-fill" style="width:${h.pct}%;background:${h.color||'var(--accent)'}"></div></div>
+      <div class="top-habit-pct" style="color:${h.color||'var(--accent)'}">${h.pct}%</div>
+    </div>`).join('');
+}
+
+// ── REPORT VIEW ──
+function renderReport() {
+  const {year:y, month:m} = state.viewDate;
+  const s = getMonthStats(y, m);
+  const top = getTopHabits();
+  const days = daysInMonth(y, m);
+  const el = document.getElementById('report-content');
+
+  el.innerHTML = `
+    <div class="section">
+      <div class="section-head"><div class="section-title-lg">${MONTHS[m]} ${y} — Summary</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="stat-card c-green"><div class="stat-num">${s.pct}%</div><div class="stat-label">Completion Rate</div></div>
+        <div class="stat-card c-ink"><div class="stat-num">${s.completed}</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card c-red"><div class="stat-num">${s.missed}</div><div class="stat-label">Missed</div></div>
+        <div class="stat-card c-amber"><div class="stat-num">${s.H}</div><div class="stat-label">Habits</div></div>
+      </div>
+      <div style="font-size:0.75rem;color:var(--ink2);line-height:1.8">
+        <strong>Analysis:</strong> In ${MONTHS[m]}, you completed <strong>${s.completed}</strong> out of <strong>${s.pastGoal}</strong> possible check-ins,
+        achieving a <strong>${s.pct}%</strong> completion rate.
+        ${s.pct>=80?'🏆 Excellent month! Keep it up.':s.pct>=60?'✅ Good progress this month.':'💪 Room to improve — consistency is key.'}
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-head"><div class="section-title-lg">Habit Breakdown</div></div>
+      ${top.map((h,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:1rem">${h.emoji}</span>
+          <div style="flex:1">
+            <div style="font-size:0.8rem;font-weight:500;color:var(--ink);margin-bottom:4px">${h.name}</div>
+            <div class="row-bar"><div class="row-bar-fill" style="width:${h.pct}%;background:${h.color||'var(--accent)'}"></div></div>
+          </div>
+          <div style="font-size:0.8rem;font-weight:700;color:${h.color||'var(--accent)'};min-width:40px;text-align:right">${h.pct}%</div>
+          <div style="font-size:0.7rem;color:var(--ink3);min-width:60px;text-align:right">🔥 ${h.streak}d streak</div>
+        </div>`).join('')}
+    </div>
+    <div class="section" style="grid-column:1/-1">
+      <div class="section-head"><div class="section-title-lg">Heatmap — ${MONTHS[m]} ${y}</div></div>
+      <div style="display:flex;gap:2px;flex-wrap:wrap;margin-bottom:8px">
+        ${['M','T','W','T','F','S','S'].map(d=>`<div style="width:28px;text-align:center;font-size:0.55rem;color:var(--ink3);font-weight:500">${d}</div>`).join('')}
+      </div>
+      <div class="heat-grid">
+        ${Array.from({length:firstDayOfMonth(y,m)},()=>'<div class="heat-cell heat-0"></div>').join('')}
+        ${Array.from({length:days},(_,i)=>{
+          const d=i+1, ymd=toYMD(y,m,d);
+          const cnt=state.habits.filter(h=>isChecked(h.id,ymd)).length;
+          const H=state.habits.length;
+          const lvl=H===0?0:cnt===0?0:cnt<=H*0.25?1:cnt<=H*0.5?2:cnt<=H*0.75?3:4;
+          return `<div class="heat-cell heat-${lvl}" data-tip="Day ${d}: ${cnt}/${H}" title="Day ${d}: ${cnt}/${H}"></div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:8px;font-size:0.6rem;color:var(--ink3)">
+        Less
+        ${[0,1,2,3,4].map(i=>`<div class="heat-cell heat-${i}" style="width:14px;height:14px"></div>`).join('')}
+        More
+      </div>
+    </div>`;
+}
+
+// ── WEEKLY VIEW ──
+function renderWeekly() {
+  const weekDays = getWeekDays(state.weekOffset);
+  const start = weekDays[0].date, end = weekDays[6].date;
+  const fmt = d => d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  document.getElementById('week-range-label').textContent = `${fmt(start)} – ${fmt(end)}`;
+  document.getElementById('next-week-btn').disabled = state.weekOffset >= 0;
+
+  // Build table
+  const thead = document.getElementById('weekly-head');
+  const tbody = document.getElementById('weekly-body');
+  const todayStr = todayYMD();
+
+  thead.innerHTML = '<tr><th class="habit-name-th">Habit</th>'
+    + weekDays.map(({date,ymd}) => {
+        const dow = DAYS_SHORT[getDayOfWeek(date.getFullYear(),date.getMonth(),date.getDate())];
+        const isT = ymd===todayStr;
+        return `<th class="${isT?'today-col':''}">${dow}<br><span style="font-size:0.7rem;font-weight:400">${date.getDate()}</span></th>`;
+      }).join('')
+    + '<th style="text-align:center;min-width:50px">Done</th><th>%</th></tr>';
+
+  tbody.innerHTML = '';
+  state.habits.forEach(h => {
+    const tr = document.createElement('tr'); tr.className='habit-tr';
+    let done=0;
+    let cells = weekDays.map(({ymd,date})=>{
+      const checked=isChecked(h.id,ymd), future=isFuture(ymd), isT=ymd===todayStr;
+      if(checked) done++;
+      return `<td class="cb-cell${isT?' today-col':''}">
+        <input type="checkbox" class="habit-cb" ${checked?'checked':''} ${future?'disabled':''}
+          data-hid="${h.id}" data-ymd="${ymd}"/>
+      </td>`;
+    }).join('');
+    const pct=Math.round((done/7)*100);
+    tr.innerHTML=`<td><div class="habit-name-cell"><span class="habit-emoji">${h.emoji}</span><span style="font-size:0.8rem">${h.name}</span></div></td>
+      ${cells}
+      <td style="text-align:center;font-size:0.78rem;font-weight:600;color:var(--ink)">${done}/7</td>
+      <td class="row-pct" style="color:${pct>=80?'var(--accent)':pct>=50?'var(--amber-dark)':'var(--red)'}">${pct}%</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Attach events
+  tbody.querySelectorAll('.habit-cb').forEach(cb=>{
+    cb.addEventListener('change',function(){
+      const key=checkKey(this.dataset.hid,this.dataset.ymd);
+      if(this.checked) state.checks[key]=true; else delete state.checks[key];
+      save(); renderSidebar(); renderWeekly();
+    });
+  });
+
+  // Compare bars
+  renderWeekCompare();
+}
+
+function renderWeekCompare() {
+  const bars = document.getElementById('compare-bars');
+  const lbls = document.getElementById('compare-labels');
+  if(!bars) return;
+  bars.innerHTML=''; lbls.innerHTML='';
+  const H = state.habits.length; if(!H) return;
+
+  const thisWeek = getWeekDays(state.weekOffset);
+  const lastWeek = getWeekDays(state.weekOffset-1);
+
+  const countWeek = (days) => days.reduce((acc,{ymd})=>{
+    return acc + state.habits.filter(h=>isChecked(h.id,ymd)).length;
+  },0);
+
+  const thisVal=countWeek(thisWeek), lastVal=countWeek(lastWeek), maxGoal=H*7;
+  const data=[{label:'Last Week',val:lastVal,col:'#ADA8A3'},{label:'This Week',val:thisVal,col:'#2D6A4F'}];
+  const max=Math.max(maxGoal,1);
+
+  data.forEach(d=>{
+    const h=Math.max(3,Math.round((d.val/max)*70));
+    const pct=Math.round((d.val/maxGoal)*100);
+    const wrap=document.createElement('div'); wrap.className='week-bar-wrap';
+    wrap.innerHTML=`<div class="week-bar-val">${pct}%</div>
+      <div style="width:100%;height:${h}px;background:${d.col};border-radius:4px 4px 0 0;transition:height 0.5s ease"></div>
+      <div class="week-bar-label">${d.label}</div>`;
+    bars.appendChild(wrap);
+  });
+
+  const diff = thisVal-lastVal;
+  lbls.innerHTML=`<span style="font-size:0.75rem;color:${diff>=0?'var(--accent)':'var(--red)'}">
+    ${diff>=0?'▲':'▼'} ${Math.abs(diff)} check-ins vs last week
+  </span>`;
+}
+
+// ══════════════════════════════════════════
+// ACTIONS
+// ══════════════════════════════════════════
+
+function switchView(name, btn) {
+  currentView = name;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  btn.classList.add('active');
+  renderAll();
+}
+
+function changeMonth(delta) {
+  let {year:y, month:m} = state.viewDate;
+  m += delta;
+  if (m<0){m=11;y--;}
+  if (m>11){m=0;y++;}
+  state.viewDate = {year:y, month:m};
+  save();
+  renderAll();
+}
+
+function changeWeekOffset(delta) {
+  state.weekOffset = Math.min(0, state.weekOffset + delta);
+  renderWeekly();
+  renderSidebar();
+}
+
+// ── MODAL ──
+let _emoji = EMOJIS[0], _color = COLORS[0];
+editingId = null;
+
+function openModal(id) {
+  editingId = id||null;
+  const title = document.getElementById('modal-title');
+  const saveBtn = document.getElementById('modal-save-btn');
+  const nameInp = document.getElementById('habit-name-inp');
+
+  if (editingId) {
+    const h = state.habits.find(x=>x.id===editingId);
+    title.textContent = 'Edit Habit';
+    saveBtn.textContent = 'Save Changes';
+    nameInp.value = h?.name||'';
+    _emoji = h?.emoji||EMOJIS[0];
+    _color = h?.color||COLORS[0];
+  } else {
+    title.textContent = 'Add New Habit';
+    saveBtn.textContent = 'Add Habit';
+    nameInp.value = '';
+    _emoji = EMOJIS[0];
+    _color = COLORS[0];
+  }
+  renderEmojiGrid(); renderColorGrid();
+  document.getElementById('modal-overlay').classList.add('open');
+  setTimeout(()=>nameInp.focus(),50);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null;
+}
+
+function renderEmojiGrid() {
+  const grid = document.getElementById('emoji-grid');
+  grid.innerHTML = EMOJIS.map(e=>`
+    <div class="emoji-opt${e===_emoji?' sel':''}" onclick="selectEmoji('${e}')">${e}</div>`).join('');
+}
+
+function renderColorGrid() {
+  const grid = document.getElementById('color-grid');
+  grid.innerHTML = COLORS.map(c=>`
+    <div class="color-opt${c===_color?' sel':''}" style="background:${c}" onclick="selectColor('${c}')"></div>`).join('');
+}
+
+function selectEmoji(e) { _emoji=e; renderEmojiGrid(); }
+function selectColor(c) { _color=c; renderColorGrid(); }
+
+function saveHabit() {
+  const name = document.getElementById('habit-name-inp').value.trim();
+  if (!name) { showToast('Please enter a habit name'); return; }
+  if (editingId) {
+    const h = state.habits.find(x=>x.id===editingId);
+    if (h) { h.name=name; h.emoji=_emoji; h.color=_color; }
+  } else {
+    state.habits.push({id:Date.now().toString(), name, emoji:_emoji, color:_color, createdAt:todayYMD()});
+  }
+  save(); closeModal(); renderAll();
+  showToast(editingId ? 'Habit updated!' : 'Habit added!');
+}
+
+function deleteHabit(id) {
+  const h = state.habits.find(x=>x.id===id);
+  if (!confirm(`Delete "${h?.name}"? This will remove all its data.`)) return;
+  state.habits = state.habits.filter(x=>x.id!==id);
+  Object.keys(state.checks).forEach(k=>{ if(k.startsWith(id+'_')) delete state.checks[k]; });
+  save(); renderAll(); showToast('Habit deleted');
+}
+
+function renameHabit(input) {
+  const name = input.value.trim();
+  const h = state.habits.find(x=>x.id===input.dataset.id);
+  if (!name) { if(h) input.value=h.name; return; }
+  if (h && h.name!==name) { h.name=name; save(); renderTopHabits(); }
+}
+
+function resetMonth() {
+  const {year:y,month:m} = state.viewDate;
+  if (!confirm(`Clear all checks for ${MONTHS[m]} ${y}?`)) return;
+  const days = daysInMonth(y,m);
+  for (let d=1;d<=days;d++) {
+    const ymd=toYMD(y,m,d);
+    state.habits.forEach(h=>delete state.checks[checkKey(h.id,ymd)]);
+  }
+  save(); renderAll(); showToast('Month reset');
+}
+
+function exportData() {
+  const data = JSON.stringify({habits:state.habits,checks:state.checks,exportedAt:new Date().toISOString()},null,2);
+  const a=document.createElement('a');
+  a.href='data:application/json;charset=utf-8,'+encodeURIComponent(data);
+  a.download=`mindform-export-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast('Exported!');
+}
+
+function printReport() { window.print(); }
+
+function showToast(msg, dur=2200) {
+  const t=document.getElementById('toast'); t.textContent=msg;
+  t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),dur);
+}
+
+// ── KEYBOARD & MODAL CLOSE ──
+document.getElementById('modal-overlay').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+document.getElementById('habit-name-inp').addEventListener('keydown',e=>{if(e.key==='Enter')saveHabit();});
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+load();
+renderAll();
+</script>
+</body>
+</html>
